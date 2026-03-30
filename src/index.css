@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+@keyframes logo-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.logo-marquee {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+.logo-track {
+  animation: logo-scroll 22s linear infinite;
+}

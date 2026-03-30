@@ -13,7 +13,7 @@ const Navbar = () => {
         <Link to="/" className="flex items-center gap-2">
           <img
             src={assets.logo}
-            alt="Insiderjobs"
+            alt="TalentTrack"
             className="h-9 w-auto select-none"
             draggable="false"
           />
