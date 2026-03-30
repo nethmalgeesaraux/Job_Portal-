@@ -1,7 +1,24 @@
-import React from 'react'
+import React, { useContext, useRef } from 'react'
 import { assets } from '../assets/assets'
+import { AppContext } from '../contexts/Appcontext'
 
 const Hero = () => {
+  const { setSearchFilter, setIsSearched } = useContext(AppContext)
+  const titleRef = useRef(null)
+  const locationRef = useRef(null)
+
+  const onSearch = () => {
+    setSearchFilter({
+      title: titleRef.current?.value || '',
+      location: locationRef.current?.value || '',
+    })
+    setIsSearched(true)
+    console.log({
+      title: titleRef.current?.value || '',
+      location: locationRef.current?.value || '',
+    })
+  }
+
   const trustedCompanies = [
     { name: 'Microsoft', logo: assets.microsoft_logo },
     { name: 'Walmart', logo: assets.walmart_logo },
@@ -33,9 +50,11 @@ const Hero = () => {
                 className="h-4 w-4 opacity-60"
               />
               <input
+                ref={titleRef}
                 type="text"
                 placeholder="Search for jobs"
                 className="w-full bg-transparent p-2 text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                onKeyDown={(event) => event.key === 'Enter' && onSearch()}
               />
             </div>
 
@@ -46,14 +65,17 @@ const Hero = () => {
                 className="h-4 w-4 opacity-60"
               />
               <input
+                ref={locationRef}
                 type="text"
                 placeholder="Location"
                 className="w-full bg-transparent p-2 text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                onKeyDown={(event) => event.key === 'Enter' && onSearch()}
               />
             </div>
 
             <button
               type="button"
+              onClick={onSearch}
               className="rounded-xl bg-blue-600 px-8 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               Search
