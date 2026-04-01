@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useUser } from '@clerk/react'
 import Navbar from '../components/Navbar'
@@ -18,6 +18,9 @@ const Applyjob = () => {
   const { id } = useParams()
   const { user } = useUser()
   const selectedJob = jobsData.find((job) => job._id === id)
+  const defaultFullName =
+    [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.username || ''
+  const defaultEmail = user?.primaryEmailAddress?.emailAddress || ''
   const relatedJobs = jobsData
     .filter(
       (job) =>
@@ -27,31 +30,28 @@ const Applyjob = () => {
     .slice(0, 4)
 
   const [formData, setFormData] = useState({
-    fullName:
-      [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
-      user?.username ||
-      '',
-    email: user?.primaryEmailAddress?.emailAddress || '',
+    fullName: '',
+    email: '',
     phone: '',
     coverLetter: '',
+  })
+  const [touchedFields, setTouchedFields] = useState({
+    fullName: false,
+    email: false,
   })
   const [resumeFile, setResumeFile] = useState(null)
   const [isApplied, setIsApplied] = useState(false)
 
-  useEffect(() => {
-    setFormData((current) => ({
-      ...current,
-      fullName:
-        current.fullName ||
-        [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
-        user?.username ||
-        '',
-      email: current.email || user?.primaryEmailAddress?.emailAddress || '',
-    }))
-  }, [user])
-
   const handleChange = (event) => {
     const { name, value } = event.target
+
+    if (name === 'fullName' || name === 'email') {
+      setTouchedFields((current) => ({
+        ...current,
+        [name]: true,
+      }))
+    }
+
     setFormData((current) => ({
       ...current,
       [name]: value,
@@ -282,7 +282,7 @@ const Applyjob = () => {
                       id="fullName"
                       name="fullName"
                       type="text"
-                      value={formData.fullName}
+                      value={touchedFields.fullName ? formData.fullName : defaultFullName}
                       onChange={handleChange}
                       required
                       className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white"
@@ -297,7 +297,7 @@ const Applyjob = () => {
                       id="email"
                       name="email"
                       type="email"
-                      value={formData.email}
+                      value={touchedFields.email ? formData.email : defaultEmail}
                       onChange={handleChange}
                       required
                       className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white"
