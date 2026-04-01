@@ -2,9 +2,12 @@ import React, { useContext } from 'react'
 import { Link } from 'react-router-dom'
 import { AppContext } from '../contexts/Appcontext'
 import { JobCategories, JobLocations, jobsData } from '../assets/assets'
+import { useClerk, useUser } from '@clerk/react'
 
 const JobList = () => {
   const { searchFilter, isSearched } = useContext(AppContext)
+  const { isSignedIn } = useUser()
+  const { openSignIn } = useClerk()
 
   const getCategoryCount = (category) =>
     jobsData.filter((job) => job.category === category).length
@@ -137,12 +140,24 @@ const JobList = () => {
                   <div className="mt-6 flex gap-3">
                     <Link
                       to={`/applyjob/${job._id}`}
+                      onClick={(e) => {
+                        if (!isSignedIn) {
+                          e.preventDefault()
+                          openSignIn({ fallbackRedirectUrl: `/applyjob/${job._id}` })
+                        }
+                      }}
                       className="inline-flex min-w-[112px] items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
                     >
                       Apply now
                     </Link>
                     <Link
                       to={`/applyjob/${job._id}`}
+                      onClick={(e) => {
+                        if (!isSignedIn) {
+                          e.preventDefault()
+                          openSignIn({ fallbackRedirectUrl: `/applyjob/${job._id}` })
+                        }
+                      }}
                       className="inline-flex min-w-[112px] items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
                     >
                       Learn more
