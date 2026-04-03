@@ -1,4 +1,5 @@
 const APPLICATIONS_STORAGE_KEY = 'job-portal-applications'
+export const APPLICATIONS_UPDATED_EVENT = 'applications:updated'
 
 const isBrowser = typeof window !== 'undefined'
 
@@ -23,5 +24,6 @@ export const saveApplication = (application) => {
   const nextApplications = [application, ...currentApplications.filter((item) => item.id !== application.id)]
 
   window.localStorage.setItem(APPLICATIONS_STORAGE_KEY, JSON.stringify(nextApplications))
+  window.dispatchEvent(new CustomEvent(APPLICATIONS_UPDATED_EVENT, { detail: nextApplications }))
   return nextApplications
 }

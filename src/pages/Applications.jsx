@@ -4,7 +4,10 @@ import { useUser } from '@clerk/react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { assets, jobsApplied, jobsData } from '../assets/assets'
-import { getStoredApplications } from '../utils/applicationStorage'
+import {
+  APPLICATIONS_UPDATED_EVENT,
+  getStoredApplications,
+} from '../utils/applicationStorage'
 
 const formatCurrency = (salary) => `$${salary.toLocaleString()}`
 
@@ -27,7 +30,27 @@ const Applications = () => {
   const [storedApplications, setStoredApplications] = useState([])
 
   useEffect(() => {
-    setStoredApplications(getStoredApplications())
+    const syncApplications = () => {
+      setStoredApplications(getStoredApplications())
+    }
+
+    const handleApplicationsUpdated = (event) => {
+      if (Array.isArray(event.detail)) {
+        setStoredApplications(event.detail)
+        return
+      }
+
+      syncApplications()
+    }
+
+    syncApplications()
+    window.addEventListener('storage', syncApplications)
+    window.addEventListener(APPLICATIONS_UPDATED_EVENT, handleApplicationsUpdated)
+
+    return () => {
+      window.removeEventListener('storage', syncApplications)
+      window.removeEventListener(APPLICATIONS_UPDATED_EVENT, handleApplicationsUpdated)
+    }
   }, [])
 
   const recentApplications = useMemo(() => {
