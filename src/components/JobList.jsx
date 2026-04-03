@@ -1,13 +1,25 @@
-import React, { useContext } from 'react'
+import React, { useContext, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AppContext } from '../contexts/Appcontext'
-import { JobCategories, JobLocations, jobsData } from '../assets/assets'
+import { jobsData } from '../assets/assets'
 import { useClerk, useUser } from '@clerk/react'
 
 const JobList = () => {
   const { searchFilter, isSearched } = useContext(AppContext)
   const { isSignedIn } = useUser()
   const { openSignIn } = useClerk()
+  const [selectedCategories, setSelectedCategories] = useState([])
+  const [selectedLocations, setSelectedLocations] = useState([])
+
+  const availableCategories = useMemo(
+    () => [...new Set(jobsData.map((job) => job.category))].sort(),
+    []
+  )
+
+  const availableLocations = useMemo(
+    () => [...new Set(jobsData.map((job) => job.location))].sort(),
+    []
+  )
 
   const getCategoryCount = (category) =>
     jobsData.filter((job) => job.category === category).length
@@ -25,9 +37,18 @@ const JobList = () => {
     return text.length > 120 ? `${text.slice(0, 120)}...` : text
   }
 
-  const filteredJobs = jobsData.filter((job) => {
-    if (!isSearched) return true
+  const toggleFilter = (value, selectedValues, setSelectedValues) => {
+    setSelectedValues((current) =>
+      current.includes(value) ? current.filter((item) => item !== value) : [...current, value]
+    )
+  }
 
+  const clearFilters = () => {
+    setSelectedCategories([])
+    setSelectedLocations([])
+  }
+
+  const filteredJobs = jobsData.filter((job) => {
     const matchesTitle =
       !searchFilter.title ||
       normalizeText(job.title).includes(normalizeText(searchFilter.title))
@@ -36,25 +57,78 @@ const JobList = () => {
       !searchFilter.location ||
       normalizeText(job.location).includes(normalizeText(searchFilter.location))
 
-    return matchesTitle && matchesLocation
+    const matchesSelectedCategory =
+      selectedCategories.length === 0 || selectedCategories.includes(job.category)
+
+    const matchesSelectedLocation =
+      selectedLocations.length === 0 || selectedLocations.includes(job.location)
+
+    return matchesTitle && matchesLocation && matchesSelectedCategory && matchesSelectedLocation
   })
 
   const visibleJobs = filteredJobs.slice(0, 6)
+  const hasActiveSearch = isSearched && (searchFilter.title || searchFilter.location)
+  const hasActiveFilters = selectedCategories.length > 0 || selectedLocations.length > 0
 
   return (
     <section className="px-4 pb-12 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row lg:items-start">
         <aside className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-lg lg:sticky lg:top-6 lg:max-w-[280px]">
           <div className="border-b border-slate-200 pb-5">
-            <h3 className="text-base font-semibold text-slate-900">Current Search</h3>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-base font-semibold text-slate-900">Current Search</h3>
+              {hasActiveFilters ? (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700 transition hover:text-blue-900"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
-              <span className="rounded-md border border-cyan-400 bg-cyan-50 px-3 py-1.5 text-xs font-medium text-cyan-700">
-                {isSearched && searchFilter.title ? searchFilter.title : 'Full stack'}
-              </span>
-              <span className="rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700">
-                {isSearched && searchFilter.location ? searchFilter.location : 'Bangalore'}
-              </span>
+              {hasActiveSearch ? (
+                <>
+                  {searchFilter.title ? (
+                    <span className="rounded-md border border-cyan-400 bg-cyan-50 px-3 py-1.5 text-xs font-medium text-cyan-700">
+                      {searchFilter.title}
+                    </span>
+                  ) : null}
+                  {searchFilter.location ? (
+                    <span className="rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700">
+                      {searchFilter.location}
+                    </span>
+                  ) : null}
+                </>
+              ) : (
+                <span className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-500">
+                  No keyword search yet
+                </span>
+              )}
+
+              {selectedCategories.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => toggleFilter(category, selectedCategories, setSelectedCategories)}
+                  className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700"
+                >
+                  {category}
+                </button>
+              ))}
+
+              {selectedLocations.map((location) => (
+                <button
+                  key={location}
+                  type="button"
+                  onClick={() => toggleFilter(location, selectedLocations, setSelectedLocations)}
+                  className="rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700"
+                >
+                  {location}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -64,12 +138,19 @@ const JobList = () => {
             </h4>
 
             <div className="mt-4 space-y-3">
-              {JobCategories.map((category) => (
+              {availableCategories.map((category) => (
                 <label
                   key={category}
                   className="flex cursor-pointer items-center gap-3 text-sm text-slate-600"
                 >
-                  <input type="checkbox" className="h-4 w-4 rounded border-slate-300" />
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(category)}
+                    onChange={() =>
+                      toggleFilter(category, selectedCategories, setSelectedCategories)
+                    }
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
                   <span>
                     {category} ({getCategoryCount(category)})
                   </span>
@@ -82,12 +163,19 @@ const JobList = () => {
             <h4 className="text-sm font-semibold text-slate-900">Search by Location</h4>
 
             <div className="mt-4 space-y-3">
-              {JobLocations.map((location) => (
+              {availableLocations.map((location) => (
                 <label
                   key={location}
                   className="flex cursor-pointer items-center gap-3 text-sm text-slate-600"
                 >
-                  <input type="checkbox" className="h-4 w-4 rounded border-slate-300" />
+                  <input
+                    type="checkbox"
+                    checked={selectedLocations.includes(location)}
+                    onChange={() =>
+                      toggleFilter(location, selectedLocations, setSelectedLocations)
+                    }
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
                   <span>
                     {location} ({getLocationCount(location)})
                   </span>
@@ -98,12 +186,15 @@ const JobList = () => {
         </aside>
 
         <div className="flex-1">
-          <div className="mb-6">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <h2 className="text-3xl font-bold tracking-tight text-slate-900">
               Latest jobs
             </h2>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="text-sm text-slate-500">
               Transform words into shining impact with your next career move.
+            </p>
+            <p className="text-sm font-medium text-blue-700">
+              {filteredJobs.length} roles match your search
             </p>
           </div>
 
