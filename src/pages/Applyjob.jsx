@@ -4,6 +4,7 @@ import { useUser } from '@clerk/react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { assets, jobsData } from '../assets/assets'
+import { saveApplication } from '../utils/applicationStorage'
 
 const formatSalary = (salary) => `$${salary.toLocaleString()}`
 
@@ -65,6 +66,28 @@ const Applyjob = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault()
+    const applicantName = touchedFields.fullName ? formData.fullName : defaultFullName
+    const applicantEmail = touchedFields.email ? formData.email : defaultEmail
+
+    saveApplication({
+      id: `${selectedJob._id}-${Date.now()}`,
+      jobId: selectedJob._id,
+      fullName: applicantName,
+      email: applicantEmail,
+      phone: formData.phone,
+      coverLetter: formData.coverLetter,
+      resumeName: resumeFile?.name || '',
+      appliedAt: new Date().toISOString(),
+      jobTitle: selectedJob.title,
+      companyName: selectedJob.companyId.name,
+      companyImage: selectedJob.companyId.image,
+      companyEmail: selectedJob.companyId.email,
+      location: selectedJob.location,
+      level: selectedJob.level,
+      category: selectedJob.category,
+      salary: selectedJob.salary,
+      status: 'In Review',
+    })
     setIsApplied(true)
   }
 
@@ -414,7 +437,7 @@ const Applyjob = () => {
                             </span>
                           </div>
                           <p className="mt-1 text-sm text-slate-500">
-                            {job.companyId.name} · {job.location}
+                            {job.companyId.name} / {job.location}
                           </p>
                           <div className="mt-3 flex flex-wrap gap-2">
                             <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600">
